@@ -39,23 +39,3 @@ export const Authenticate = (req: Request, res: Response, next: NextFunction) =>
         });
 };
 
-// // The Authenticate middleware function is used to verify the token sent by the client.
-// export const Authenticate = async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//         const isValid = await ValidateSignatureToken(req);
-
-//         if(!isValid) {
-//             return res.status(401).json({
-//                 success: false,
-//                 message: "Unauthorized: Invalid or missing token",
-//             });
-//         }
-
-//       return next();
-    
-//     } catch (error) {
-//         next(error);
-//     }
-// };
-
-

@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { EditVandorInput, IVandorLoginInputs } from "../dto";
 import { FindVandor, GenerateToken, ValidatePassword } from "../utility";
+import { ICreateFoodInput } from "../dto/Food.dto";
+import { Food } from "../models";
 
 // Vendor login
 export const VandorLogin = async (req: Request, res: Response, next: NextFunction) => {
@@ -29,6 +31,7 @@ export const VandorLogin = async (req: Request, res: Response, next: NextFunctio
                  error: "INVALID_CREDENTIALS"
              });
          }
+         console.log("Password validated successfully");
 
 
          const token = await GenerateToken({
@@ -37,6 +40,8 @@ export const VandorLogin = async (req: Request, res: Response, next: NextFunctio
             name: existingVandor.name,
             foodTypes: existingVandor.foodType
         });
+
+
 
         // Return success response with token
         return res.status(200).json({
@@ -136,5 +141,86 @@ export const UpdateVandorService = async (req: Request, res: Response, next: Nex
                 error: "USER_NOT_FOUND"})
     }
 
+}
+
+
+// Vendor will add the available food
+export const AddFood = async (req: Request, res: Response, next: NextFunction) => {
+   try{
+    const user = req.user;
+
+    if(user){
+         // Extract email and password from request body
+       const { name, description, category, price, available, pickUpTime, readyTime, foodType } = req.body as ICreateFoodInput;
+
+       const vandor = await FindVandor(user._id);
+
+
+       // Check if vendor exists, if not return 404
+       if (!vandor) {
+        return res.status(404).json({ message: "Vendor not found" });
+     }
+
+       const createFood = await Food.create({
+            vandorId: vandor._id,
+            name: name,
+            description: description,
+            category: category,
+            price: price,
+            available: available,
+            pickUpTime: pickUpTime,
+            readyTime: readyTime,
+            foodType: foodType,
+            image:['test.jpg'],  // add this with S3 AWS bucket
+            rating:0
+
+       })
+
+        // Save the food in the vandor 
+        vandor.foods.push(createFood);
+        const savedResult = await vandor.save();
+        return res.status(200).json({
+            success: true,
+            message: "Food was added successfully",
+            data: savedResult
+        }) 
+       }
+    
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+
+   }catch(error){
+       next(error)
+   }
+}
+
+// Vendor will get the available food
+export const GetFoods = async (req: Request, res: Response, next: NextFunction) => {
+ 
+    try{
+        const user = req.user;
+
+        if(user){
+           const foods = await Food.find({vandorId: user._id});
+
+            if(foods !== null){
+                return res.status(200).json({
+                    success: true,
+                    message: "Food found successfully",
+                    data: foods
+                })
+            }
+            // Handle case where vendor is not found
+            return res.status(404).json({
+                success: false,
+                message: "Nothing was found",
+                error: "NOT_FOUND"
+            })
+        }
+
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    }catch(error){
+        next(error)
+    }
 }
 
