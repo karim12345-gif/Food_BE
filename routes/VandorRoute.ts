@@ -1,8 +1,14 @@
+import multer from "multer";
+import { storage } from '../config';
+import { Authenticate } from '../middlewares';
 import express, {Request, Response, NextFunction} from 'express';
 import { GetVandorProfile, VandorLogin, UpdateVandorProfile, UpdateVandorService, AddFood, GetFoods } from '../controllers';
-import { Authenticate } from '../middlewares';
+
 
 const router = express.Router();
+
+// upload the image
+const upload = multer({ storage });
 
 // Keep /login open (No authentication required)
 router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
@@ -39,8 +45,8 @@ router.patch('/service', async (req: Request, res: Response, next: NextFunction)
     }
 });
 
-// Vandor will add the available food
-router.post('/food', async (req: Request, res: Response, next: NextFunction) => {
+// Vandor will add the available food and upload the image
+router.post('/food',upload.single("image"), async (req: Request, res: Response, next: NextFunction) => {
     try {
         await AddFood(req, res, next);
     } catch (error) {

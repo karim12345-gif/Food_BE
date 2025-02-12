@@ -4,6 +4,7 @@ import { FindVandor, GenerateToken, ValidatePassword } from "../utility";
 import { ICreateFoodInput } from "../dto/Food.dto";
 import { Food } from "../models";
 
+
 // Vendor login
 export const VandorLogin = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -150,6 +151,9 @@ export const AddFood = async (req: Request, res: Response, next: NextFunction) =
     const user = req.user;
 
     if(user){
+
+         // Debug: Check if the file is being received
+         console.log("Request File: ", req.file);
          // Extract email and password from request body
        const { name, description, category, price, available, pickUpTime, readyTime, foodType } = req.body as ICreateFoodInput;
 
@@ -161,7 +165,11 @@ export const AddFood = async (req: Request, res: Response, next: NextFunction) =
         return res.status(404).json({ message: "Vendor not found" });
      }
 
-       const createFood = await Food.create({
+       // ✅ Extract image URL from req.file
+       const imageUrl = req.file ? (req.file as any).path : "";
+       console.log("Image URL: ", imageUrl);
+
+        const createFood = await Food.create({
             vandorId: vandor._id,
             name: name,
             description: description,
@@ -171,7 +179,7 @@ export const AddFood = async (req: Request, res: Response, next: NextFunction) =
             pickUpTime: pickUpTime,
             readyTime: readyTime,
             foodType: foodType,
-            image:['test.jpg'],  // add this with S3 AWS bucket
+            images: [imageUrl],
             rating:0
 
        })
